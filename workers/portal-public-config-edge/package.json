@@ -1,0 +1,21 @@
+{
+  "name": "portal-public-config-edge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.7.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261123.1",
+    "@types/node": "^22.13.14",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.10.0"
+  }
+}

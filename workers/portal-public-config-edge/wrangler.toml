@@ -1,0 +1,8 @@
+name = "portal-public-config-edge"
+main = "src/index.ts"
+compatibility_date = "2025-11-01"
+
+[vars]
+PUBLIC_OVERVIEW_USERS_FALLBACK = "0"
+# Secrets (never commit):
+#   npx wrangler secret put INTERNAL_SERVICE_TOKEN

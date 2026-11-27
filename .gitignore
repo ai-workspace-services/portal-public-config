@@ -1,0 +1,13 @@
+# Binaries
+/portal-public-config
+*.exe
+*.out
+*.test
+
+# Node / Wrangler
+node_modules/
+.wrangler/
+dist/
+
+# OS
+.DS_Store
