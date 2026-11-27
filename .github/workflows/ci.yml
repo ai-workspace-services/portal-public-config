@@ -118,12 +118,12 @@ jobs:
           echo "HEALTHZ=${HEALTHZ}"
           echo "${HEALTHZ}" | grep -q '"runtime":"cloudflare-worker"'
 
-          echo "Checking ${BASE_URL}/api/auth/homepage-video (default)"
-          VIDEO_DEFAULT=$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors --max-time 15 "${BASE_URL}/api/auth/homepage-video")
-          echo "VIDEO_DEFAULT=${VIDEO_DEFAULT}"
-          echo "${VIDEO_DEFAULT}" | grep -q 'youtube.com/watch?v=UW6DY6HQnmo'
+          echo "Checking ${BASE_URL}/readyz"
+          READYZ=$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors --max-time 15 "${BASE_URL}/readyz")
+          echo "READYZ=${READYZ}"
+          echo "${READYZ}" | grep -q '"status":"ready"'
 
-          echo "Checking ${BASE_URL}/api/auth/homepage-video (cn-www.svc.plus)"
-          VIDEO_CN=$(curl -fsS --retry 6 --retry-delay 3 --retry-all-errors --max-time 15 -H "X-Forwarded-Host: cn-www.svc.plus" "${BASE_URL}/api/auth/homepage-video")
-          echo "VIDEO_CN=${VIDEO_CN}"
-          echo "${VIDEO_CN}" | grep -q 'bilibili.com/video/BV12DwazxEkL'
+          echo "Verifying retired ${BASE_URL}/api/auth/homepage-video returns 404"
+          STATUS=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "${BASE_URL}/api/auth/homepage-video")
+          echo "HOMEPAGE_VIDEO_STATUS=${STATUS}"
+          [ "${STATUS}" = "404" ]
