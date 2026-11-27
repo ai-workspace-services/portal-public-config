@@ -3,7 +3,6 @@ package config
 import (
 	"crypto/subtle"
 	"encoding/json"
-	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -15,13 +14,6 @@ const (
 	RuntimeGoOrigin = "go-origin"
 	ServiceName     = "portal-public-config"
 )
-
-// HomepageVideoEntry represents a resolved homepage video configuration.
-type HomepageVideoEntry struct {
-	Domain    string `json:"domain"`
-	VideoURL  string `json:"videoUrl"`
-	PosterURL string `json:"posterUrl"`
-}
 
 // Options configures the HTTP handler.
 type Options struct {
@@ -45,20 +37,6 @@ func LoadOptionsFromEnv() Options {
 	}
 }
 
-var defaultHomepageVideo = HomepageVideoEntry{
-	Domain:    "",
-	VideoURL:  "https://www.youtube.com/watch?v=UW6DY6HQnmo",
-	PosterURL: "",
-}
-
-var homepageVideoOverrides = map[string]HomepageVideoEntry{
-	"cn-www.svc.plus": {
-		Domain:    "cn-www.svc.plus",
-		VideoURL:  "https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd",
-		PosterURL: "",
-	},
-}
-
 // NewHandler returns an http.Handler serving all portal-public-config endpoints.
 func NewHandler(opts Options) http.Handler {
 	if opts.Now == nil {
@@ -68,7 +46,6 @@ func NewHandler(opts Options) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", handleHealthz)
 	mux.HandleFunc("GET /readyz", handleReadyz)
-	mux.HandleFunc("GET /api/auth/homepage-video", handleHomepageVideo)
 	mux.HandleFunc("GET /api/internal/sandbox/guest", withInternalAuth(opts.InternalServiceToken, handleSandboxGuest))
 	mux.HandleFunc("GET /api/internal/public-overview", withInternalAuth(opts.InternalServiceToken, func(w http.ResponseWriter, r *http.Request) {
 		handlePublicOverview(w, r, opts)
@@ -89,19 +66,6 @@ func handleReadyz(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "ready",
 		"runtime": RuntimeGoOrigin,
-	})
-}
-
-func handleHomepageVideo(w http.ResponseWriter, r *http.Request) {
-	host := resolveRequestHost(r)
-	entry := defaultHomepageVideo
-	if override, ok := homepageVideoOverrides[host]; ok {
-		entry = override
-	}
-	w.Header().Set("Cache-Control", "public, max-age=300")
-	w.Header().Set("X-Portal-Config-Runtime", RuntimeGoOrigin)
-	writeJSON(w, http.StatusOK, map[string]HomepageVideoEntry{
-		"resolved": entry,
 	})
 }
 
@@ -146,38 +110,6 @@ func extractInternalToken(r *http.Request) string {
 		return strings.TrimSpace(auth[7:])
 	}
 	return ""
-}
-
-func resolveRequestHost(r *http.Request) string {
-	candidates := []string{
-		r.Header.Get("X-Forwarded-Host"),
-		r.Header.Get("X-Original-Host"),
-		r.Header.Get("X-Host"),
-		r.Host,
-	}
-	for _, raw := range candidates {
-		if normalized := normalizeHost(raw); normalized != "" {
-			return normalized
-		}
-	}
-	return ""
-}
-
-func normalizeHost(raw string) string {
-	s := strings.TrimSpace(raw)
-	if s == "" {
-		return ""
-	}
-	if idx := strings.IndexByte(s, ','); idx >= 0 {
-		s = strings.TrimSpace(s[:idx])
-	}
-	if host, _, err := net.SplitHostPort(s); err == nil {
-		s = host
-	} else if strings.Count(s, ":") == 1 {
-		s = s[:strings.IndexByte(s, ':')]
-	}
-	s = strings.Trim(s, "[]")
-	return strings.ToLower(strings.TrimSpace(s))
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {

@@ -42,77 +42,15 @@ func TestHealthzAndReadyz(t *testing.T) {
 	}
 }
 
-func TestHomepageVideoResolution(t *testing.T) {
+func TestHomepageVideoRetired(t *testing.T) {
 	h := NewHandler(Options{})
 
-	tests := []struct {
-		name           string
-		host           string
-		headers        map[string]string
-		wantDomain     string
-		wantVideoURL   string
-	}{
-		{
-			name:         "default host",
-			host:         "www.svc.plus",
-			wantDomain:   "",
-			wantVideoURL: "https://www.youtube.com/watch?v=UW6DY6HQnmo",
-		},
-		{
-			name:         "cn override via X-Forwarded-Host with port and uppercase",
-			host:         "www.svc.plus",
-			headers:      map[string]string{"X-Forwarded-Host": "CN-WWW.SVC.PLUS:443, edge.internal"},
-			wantDomain:   "cn-www.svc.plus",
-			wantVideoURL: "https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd",
-		},
-		{
-			name:         "cn override via X-Original-Host",
-			host:         "www.svc.plus",
-			headers:      map[string]string{"X-Original-Host": "cn-www.svc.plus"},
-			wantDomain:   "cn-www.svc.plus",
-			wantVideoURL: "https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd",
-		},
-		{
-			name:         "cn override via X-Host",
-			host:         "www.svc.plus",
-			headers:      map[string]string{"X-Host": "cn-www.svc.plus:8443"},
-			wantDomain:   "cn-www.svc.plus",
-			wantVideoURL: "https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd",
-		},
-		{
-			name:         "cn override via Host",
-			host:         "cn-www.svc.plus:443",
-			wantDomain:   "cn-www.svc.plus",
-			wantVideoURL: "https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd",
-		},
-	}
+	req := httptest.NewRequest(http.MethodGet, "/api/auth/homepage-video", nil)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/api/auth/homepage-video", nil)
-			req.Host = tc.host
-			for k, v := range tc.headers {
-				req.Header.Set(k, v)
-			}
-			rec := httptest.NewRecorder()
-			h.ServeHTTP(rec, req)
-
-			if rec.Code != http.StatusOK {
-				t.Fatalf("expected 200, got %d", rec.Code)
-			}
-			if cc := rec.Header().Get("Cache-Control"); cc != "public, max-age=300" {
-				t.Fatalf("unexpected Cache-Control: %q", cc)
-			}
-			var body struct {
-				Resolved HomepageVideoEntry `json:"resolved"`
-			}
-			if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
-				t.Fatalf("decode response: %v", err)
-			}
-			if body.Resolved.Domain != tc.wantDomain || body.Resolved.VideoURL != tc.wantVideoURL || body.Resolved.PosterURL != "" {
-				t.Fatalf("unexpected resolved entry: %+v", body.Resolved)
-			}
-		})
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after endpoint retirement, got %d", rec.Code)
 	}
 }
 

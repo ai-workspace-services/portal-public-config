@@ -21,37 +21,11 @@ test('GET /healthz and /readyz return cloudflare-worker runtime', async () => {
   });
 });
 
-test('GET /api/auth/homepage-video resolves default and cn-www.svc.plus override', async () => {
+test('GET /api/auth/homepage-video is retired and returns 404', async () => {
   const app = createApp();
 
-  const defaultRes = await app.request('https://www.svc.plus/api/auth/homepage-video');
-  assert.equal(defaultRes.status, 200);
-  assert.equal(defaultRes.headers.get('Cache-Control'), 'public, max-age=300');
-  assert.equal(defaultRes.headers.get('X-Portal-Config-Runtime'), 'cloudflare-worker');
-  assert.deepEqual(await defaultRes.json(), {
-    resolved: {
-      domain: '',
-      videoUrl: 'https://www.youtube.com/watch?v=UW6DY6HQnmo',
-      posterUrl: '',
-    },
-  });
-
-  const cnRes = await app.request('https://www.svc.plus/api/auth/homepage-video', {
-    headers: {
-      'X-Forwarded-Host': 'CN-WWW.SVC.PLUS:443, edge.internal',
-    },
-  });
-  assert.equal(cnRes.status, 200);
-  assert.equal(cnRes.headers.get('Cache-Control'), 'public, max-age=300');
-  assert.equal(cnRes.headers.get('X-Portal-Config-Runtime'), 'cloudflare-worker');
-  assert.deepEqual(await cnRes.json(), {
-    resolved: {
-      domain: 'cn-www.svc.plus',
-      videoUrl:
-        'https://www.bilibili.com/video/BV12DwazxEkL/?spm_id_from=333.1387.homepage.video_card.click&vd_source=e14d146f9a815c7d11e1a1fc23565ffd',
-      posterUrl: '',
-    },
-  });
+  const res = await app.request('https://www.svc.plus/api/auth/homepage-video');
+  assert.equal(res.status, 404);
 });
 
 test('GET /api/internal/sandbox/guest and /api/internal/public-overview enforce token when set', async () => {
