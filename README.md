@@ -1,6 +1,6 @@
 # portal-public-config
 
-Dual-form microservice serving public portal configuration (homepage video resolution, retired sandbox endpoint, and public overview fallback).
+Dual-form microservice serving public portal configuration (retired sandbox endpoint and public overview fallback).
 
 ## Forms
 
@@ -13,6 +13,5 @@ Dual-form microservice serving public portal configuration (homepage video resol
 | --- | --- | --- |
 | `GET` | `/healthz` | Liveness probe returning runtime identity |
 | `GET` | `/readyz` | Readiness probe |
-| `GET` | `/api/auth/homepage-video` | Resolves homepage video config by request host (`Cache-Control: public, max-age=300`) |
 | `GET` | `/api/internal/sandbox/guest` | Returns `410 Gone` (`sandbox_retired`); checks `INTERNAL_SERVICE_TOKEN` when configured |
 | `GET` | `/api/internal/public-overview` | Returns public overview user count fallback; checks `INTERNAL_SERVICE_TOKEN` when configured |
